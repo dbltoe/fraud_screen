@@ -69,6 +69,22 @@ if it was used under a different surname. A loyal customer ordering again from t
 opposite of a red flag.
 </div>
 
+<div class="note">
+<strong>Never use a backslash in an email pattern.</strong> Zen Cart strips backslashes from every
+configuration value as it is saved &mdash; <code>zen_db_prepare_input()</code> calls
+<code>stripslashes()</code> &mdash; so <code>\.</code> silently becomes <code>.</code> and your pattern
+quietly matches more than you intended. This is core behaviour and affects every plugin, not just this
+one. Use character classes instead, which need no escaping:
+<table>
+<tr><th>Instead of</th><th>Write</th><th>Meaning</th></tr>
+<tr><td><code>\.</code></td><td><code>[.]</code></td><td>a literal dot</td></tr>
+<tr><td><code>\d</code></td><td><code>[0-9]</code></td><td>a digit</td></tr>
+<tr><td><code>\w</code></td><td><code>[A-Za-z0-9_]</code></td><td>a word character</td></tr>
+<tr><td><code>\s</code></td><td><code>[[:space:]]</code></td><td>whitespace</td></tr>
+</table>
+After saving, reopen the setting and confirm it reads back exactly as you typed it.
+</div>
+
 <h2>Setting it up</h2>
 
 <ol>

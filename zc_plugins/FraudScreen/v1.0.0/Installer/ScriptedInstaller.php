@@ -69,7 +69,7 @@ class ScriptedInstaller extends ScriptedInstallBase
         $this->addConfigurationKey('FRAUD_SCREEN_EMAIL_PATTERNS', [
             'configuration_title' => 'Email Patterns',
             'configuration_value' => '',
-            'configuration_description' => 'Comma-separated regular expressions matched against the order email, without delimiters. Example, for machine-generated addresses such as <code>Jayleen2Etta55@outlook.com</code>:<br><code>^[A-Za-z]+[0-9]+[A-Za-z]+[0-9]*@outlook\\.com$</code><br>Test carefully - a loose pattern will hold real customers.',
+            'configuration_description' => 'Comma-separated regular expressions matched against the order email, without delimiters. Example, for machine-generated addresses such as <code>Jayleen2Etta55@outlook.com</code>:<br><code>^[A-Za-z]+[0-9]+[A-Za-z]+[0-9]*@outlook[.]com$</code><br><strong>Do not use backslashes.</strong> Zen Cart strips them from every configuration value on save (<code>zen_db_prepare_input()</code> calls <code>stripslashes()</code>), so <code>\\.</code> silently becomes <code>.</code>. Use a character class instead: <code>[.]</code> for a literal dot, <code>[0-9]</code> rather than <code>\\d</code>, <code>[[:space:]]</code> rather than <code>\\s</code>.<br>Test carefully - a loose pattern will hold real customers.',
             'configuration_group_id' => $group_id,
             'sort_order' => 50,
             'set_function' => 'zen_cfg_textarea(',

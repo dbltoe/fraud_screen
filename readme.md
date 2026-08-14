@@ -48,6 +48,23 @@ That was only true after tuning. The first attempt flagged a legitimate Canadian
 gift into Vermont, because the velocity rule penalised her for having ordered before — which is what
 produced the returning-customer exemption.
 
+## A Zen Cart quirk that will catch you out
+
+**Never use a backslash in an email pattern.** Zen Cart strips backslashes from every configuration
+value as it is saved — `zen_db_prepare_input()` calls `stripslashes()` — so `\.` silently becomes `.`
+and the pattern quietly matches more than intended. This is core behaviour affecting every plugin.
+
+Use character classes instead, which need no escaping:
+
+| Instead of | Write | Meaning |
+|---|---|---|
+| `\.` | `[.]` | a literal dot |
+| `\d` | `[0-9]` | a digit |
+| `\w` | `[A-Za-z0-9_]` | a word character |
+| `\s` | `[[:space:]]` | whitespace |
+
+After saving, reopen the setting and confirm it reads back exactly as typed.
+
 ## Installing
 
 Copy the `zc_plugins/FraudScreen` directory into your store's `zc_plugins/`, then install through
