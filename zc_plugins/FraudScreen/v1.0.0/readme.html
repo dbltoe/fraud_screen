@@ -112,6 +112,68 @@ described above.</p>
 scores 100 on its own. Add the email patterns and watched products once you have seen a few days of
 log output. Zero the country rule if international shipping is normal for you.</p>
 
+<h2>Do this at your payment gateway first</h2>
+
+<p>This plugin catches a fraudulent order <em>after</em> the card has already been charged. Your
+payment gateway can refuse it before that happens, which is strictly better. If you take payments
+through Square, the tool is <strong>Risk Manager</strong> and it costs nothing to switch on.</p>
+
+<p>In the Square Dashboard, go to <strong>Payments &amp; invoices &rarr; Risk Manager</strong>, then
+<strong>Rules &rarr; Create rule</strong>. Give the rule a name, choose an action, pick the payment
+types and locations it applies to, add conditions, and click <strong>Activate rule</strong>. You will
+need to be the account owner or a team member granted Risk Manager permissions.</p>
+
+<p>A rule can take one of three actions. Where several rules match, 3D Secure wins over Decline, and
+Decline wins over Alert.</p>
+
+<table>
+<tr><th>Action</th><th>Effect</th></tr>
+<tr><td>3D Secure</td><td>Challenges the shopper for extra verification, such as an SMS code or biometric. Shifts liability for the transaction.</td></tr>
+<tr><td>Decline</td><td>Refuses the payment outright.</td></tr>
+<tr><td>Alert</td><td>Lets the payment through but raises a risk notification.</td></tr>
+</table>
+
+<p>The conditions available include AVS mismatch or unavailable, invalid CVV, Square's own risk
+evaluation, payment amount thresholds, payment velocity within 24 hours, prepaid cards, international
+cards, buyer IP address outside your operating country, and shipping ZIP code mismatch.</p>
+
+<h3>Which conditions actually help</h3>
+
+<div class="note">
+<strong>Do not rely on AVS and CVV alone.</strong> In the run of fraud this plugin was written for, one
+attempt came back from Square with <code>CVV_ACCEPTED</code> and <code>AVS_ACCEPTED</code> &mdash; the
+card details were entirely genuine, because they had been stolen along with the card. Only the issuing
+bank refused it. An AVS/CVV rule would have waved that one straight through.
+</div>
+
+<p>Against that particular pattern, these were the conditions that would have mattered:</p>
+
+<ol>
+  <li><strong>Buyer IP address outside your operating country.</strong> Every order in the group came
+      from a foreign IP, several Brazilian, while the billing and delivery addresses were all domestic.
+      Start this as <em>Alert</em>, check a week of genuine traffic for travelling customers and VPN
+      users, then consider promoting it to 3D Secure.</li>
+  <li><strong>Shipping ZIP code mismatch.</strong> Seven of the eight orders billed to one state and
+      shipped to another. Legitimate for gifts, so pair it with something else or use Alert rather
+      than Decline.</li>
+  <li><strong>Payment velocity.</strong> Repeated attempts within 24 hours, which is exactly what card
+      testing looks like.</li>
+  <li><strong>AVS mismatch and invalid CVV.</strong> Worth having, but as a backstop rather than the
+      main defence, for the reason above.</li>
+</ol>
+
+<p>Square also provides a <strong>Block List</strong>, which bans a specific card from all future
+transactions, and an <strong>Allow List</strong> for trusted cards that should bypass checks. The
+Block List is far more durable than blocking an email address: an attacker generates a fresh mailbox
+in seconds, but a stolen card number is a finite resource.</p>
+
+<p>To see what your rules have caught, go to <strong>Orders &amp; payments &rarr; Risk Manager &rarr;
+Blocked payments</strong>. Risk Manager does not apply to Afterpay transactions.</p>
+
+<p>Start every new rule on <strong>Alert</strong>. Watch it for a week against real orders before
+letting it decline anything &mdash; the cost of a wrong Decline is a lost sale from a real customer
+who will not try again.</p>
+
 <h2>What it will not catch</h2>
 
 <p>A first offence from a new attacker with no history on your store scores nothing. This plugin
