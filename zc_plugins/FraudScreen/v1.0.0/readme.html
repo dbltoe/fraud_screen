@@ -112,6 +112,50 @@ described above.</p>
 scores 100 on its own. Add the email patterns and watched products once you have seen a few days of
 log output. Zero the country rule if international shipping is normal for you.</p>
 
+<h2>It does not change how you take payment</h2>
+
+<p>A common question: if the store is set to capture funds immediately, does this plugin quietly turn
+sales into authorisations? <strong>No.</strong> It never touches your payment configuration, and it
+cannot &mdash; by the time it runs, the card has already been processed.</p>
+
+<p>The sequence in <code>includes/modules/checkout_process.php</code> is fixed:</p>
+
+<table>
+<tr><th>Line</th><th>What happens</th></tr>
+<tr><td>110</td><td><code>$payment_modules-&gt;before_process()</code> &mdash; the card is charged or authorised</td></tr>
+<tr><td>120</td><td>the order record is created</td></tr>
+<tr><td>126</td><td>the order's products are written</td></tr>
+<tr><td>128</td><td><code>NOTIFY_CHECKOUT_PROCESS_AFTER_ORDER_CREATE_ADD_PRODUCTS</code> &mdash; <strong>this plugin runs here</strong></td></tr>
+</table>
+
+<p>So the payment outcome is already settled. All this plugin does afterwards is change the order's
+status and write a comment.</p>
+
+<h3>What that means for you</h3>
+
+<p>Your payment module's transaction mode decides what a held order actually costs you:</p>
+
+<table>
+<tr><th>Transaction mode</th><th>A held order means</th><th>Undoing it</th></tr>
+<tr><td>Purchase / Final Sale / capture</td><td>The money has already been taken.</td><td>You must issue a <strong>refund</strong>. Processing fees are often not returned, and the transaction still exists on the card.</td></tr>
+<tr><td>Authorize</td><td>Funds are held against the card but not taken.</td><td>You can <strong>void</strong> the authorisation. No money ever moves and there is nothing to charge back.</td></tr>
+</table>
+
+<div class="note">
+<strong>This plugin is worth considerably more on a store set to Authorize.</strong> A held order can
+then be voided before capture, so a fraudulent order costs you nothing at all. On a capture store, the
+plugin tells you what happened and groups it for review, but the money has already left and recovering
+it means a refund.
+</div>
+
+<p>Switching to Authorize is not free of consequence. Every legitimate order then needs capturing by
+hand, and authorisations expire &mdash; Square voids an uncaptured payment automatically after six
+days, and other gateways have their own windows. If nobody is going to review orders promptly, capture
+is the safer setting and this plugin remains a detection tool rather than a prevention one.</p>
+
+<p>If you do run Authorize, set the hold status here to something your order-processing routine treats
+as "do not capture yet", so a held order is not swept up and captured by habit.</p>
+
 <h2>Do this at your payment gateway first</h2>
 
 <p>This plugin catches a fraudulent order <em>after</em> the card has already been charged. Your
