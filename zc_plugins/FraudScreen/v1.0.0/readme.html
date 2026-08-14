@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Zen Cart: Fraud Screen v1.0.0</title>
+<style>
+ body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; line-height: 1.55; max-width: 60em; margin: 2em auto; padding: 0 1.5em; color: #222; }
+ h1 { border-bottom: 2px solid #ddd; padding-bottom: .3em; }
+ h2 { margin-top: 1.8em; border-bottom: 1px solid #eee; padding-bottom: .2em; }
+ code { background: #f4f4f4; padding: .1em .35em; border-radius: 3px; }
+ table { border-collapse: collapse; margin: 1em 0; }
+ th, td { border: 1px solid #ddd; padding: .45em .8em; text-align: left; vertical-align: top; }
+ th { background: #f4f4f4; }
+ .note { background: #fffbe6; border-left: 4px solid #e6c200; padding: .8em 1em; margin: 1em 0; }
+</style>
+</head>
+<body>
+
+<h1>Zen Cart: Fraud Screen v1.0.0</h1>
+
+<p>Scores each incoming order against configurable fraud signals and, when the score reaches your
+threshold, moves the order to a review status and records why.</p>
+
+<p>Requires Zen Cart v2.1.0 or later. Install through <strong>Admin &rarr; Modules &rarr; Plugin
+Manager</strong>.</p>
+
+<h2>What it does, and what it deliberately does not do</h2>
+
+<p>It screens the order <strong>after</strong> it has been created, not during checkout. That is a
+deliberate choice:</p>
+
+<ul>
+  <li>The shopper never sees an error, so a false positive delays an order instead of losing a sale.</li>
+  <li>The payment outcome is already known, so declined attempts are never screened.</li>
+  <li>The evidence stays on the order for whoever reviews it.</li>
+</ul>
+
+<p>It never blocks a shopper, never shows a message, and never emails the customer. The only visible
+effect is the order's status and a comment in its history.</p>
+
+<h2>Why these signals</h2>
+
+<p>Written after a live store took a run of stolen-card orders across a month. The attacker changed
+the email address and the IP address on every single order &mdash; so blocking either was useless
+&mdash; but reused the same telephone numbers, targeted one specific low-value, easily-resold
+product, and always billed to one state while shipping to another.</p>
+
+<p>That is the shape this plugin is built to catch.</p>
+
+<h2>The rules</h2>
+
+<p>Each rule contributes points. An order is held when the total reaches the threshold. No single
+rule except the phone list is meant to trigger a hold on its own.</p>
+
+<table>
+<tr><th>Rule</th><th>Default</th><th>Notes</th></tr>
+<tr><td>Watched telephone numbers</td><td>100</td><td>Compared on digits, so formatting is irrelevant. The most reliable signal.</td></tr>
+<tr><td>Email pattern match</td><td>60</td><td>Regular expressions you supply. Test them carefully.</td></tr>
+<tr><td>Billing/delivery states differ</td><td>30</td><td>Perfectly normal for gifts &mdash; keep it well below the threshold.</td></tr>
+<tr><td>Billing/delivery countries differ</td><td>50</td><td>Set to 0 if you ship internationally routinely.</td></tr>
+<tr><td>Watched product model</td><td>40</td><td>Prefix match, so <code>CAS-08XXX-Z</code> also matches <code>CAS-08XXX-Z (SR4)</code>.</td></tr>
+<tr><td>Repeat phone or delivery address</td><td>35</td><td>See below.</td></tr>
+</table>
+
+<div class="note">
+<strong>The velocity rule ignores your returning customers.</strong> A phone number only counts if it
+appears on an earlier order under a <em>different email address</em>; a delivery address only counts
+if it was used under a different surname. A loyal customer ordering again from the same phone is the
+opposite of a red flag.
+</div>
+
+<h2>Setting it up</h2>
+
+<ol>
+  <li>Install it. <strong>It installs switched off.</strong></li>
+  <li>Fill in the rules under <strong>Admin &rarr; Configuration &rarr; Fraud Screen</strong>.</li>
+  <li>Create a dedicated order status (Admin &rarr; Localization &rarr; Orders Status), such as
+      <code>Fraud Review</code>, and select it as the hold status. Held orders are then trivial to find.</li>
+  <li>Set <strong>Log Every Screening Decision</strong> to <code>true</code> and leave the screen
+      switched <strong>off</strong> for a few days. It writes what <em>would</em> have happened to
+      <code>logs/fraud_screen.log</code>.</li>
+  <li>Read that log. If it would have held orders you recognise as genuine, adjust the points or the
+      threshold before going live.</li>
+  <li>Only then set <strong>Enable Fraud Screen</strong> to <code>true</code>.</li>
+</ol>
+
+<p>Step 4 matters. On the store this was written for, a dry run over 3,300 orders caught all eight
+known fraudulent orders and held nothing else &mdash; but that was only true after tuning. The first
+attempt held a legitimate Canadian customer shipping a gift into Vermont, because the velocity rule
+was penalising her for having ordered before. That is what produced the returning-customer exemption
+described above.</p>
+
+<h2>Suggested starting point</h2>
+
+<p>Leave the threshold at 100 and start with only the phone list populated, since a watched number
+scores 100 on its own. Add the email patterns and watched products once you have seen a few days of
+log output. Zero the country rule if international shipping is normal for you.</p>
+
+<h2>What it will not catch</h2>
+
+<p>A first offence from a new attacker with no history on your store scores nothing. This plugin
+recognises patterns, so it earns its keep on the second and subsequent orders from the same group,
+not the first.</p>
+
+<p>It is also no substitute for controls at your payment gateway. If your processor can decline on a
+failed address or security-code check, that stops the charge before it ever becomes an order, which
+is better than catching it afterwards. Use both.</p>
+
+<h2>Uninstalling</h2>
+
+<p>Uninstall through Plugin Manager. It removes its configuration keys and its configuration group.
+It does not alter any order it previously held; those keep the status and comments it applied.</p>
+
+<h2>Version history</h2>
+
+<h3>v1.0.0</h3>
+<ul>
+  <li>Initial release.</li>
+  <li>Scores orders after creation against watched telephone numbers, email patterns, billing and
+      delivery state and country mismatches, watched product models, and repeat use of a phone number
+      or delivery address by a different customer.</li>
+  <li>Holds orders reaching the threshold in a configurable order status and records the score and
+      reasons in the order history.</li>
+  <li>Optional alert email and optional per-order decision logging.</li>
+  <li>Screening never interrupts checkout; all processing is wrapped so that any unexpected condition
+      leaves the order exactly as it was.</li>
+</ul>
+
+</body>
+</html>

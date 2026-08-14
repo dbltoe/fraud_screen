@@ -1,0 +1,12 @@
+Fraud Screen for Zen Cart
+
+v1.0.0
+- Initial release.
+- Scores orders after creation against configurable signals: watched telephone
+  numbers, email patterns, billing/delivery state and country mismatches,
+  watched product models, and repeat use of a phone number or delivery address.
+- Holds orders reaching the threshold in a configurable order status and records
+  the score and reasons in the order history.
+- Optional alert email and optional per-order decision logging.
+- Screening never interrupts checkout; a false positive delays an order rather
+  than losing the sale.

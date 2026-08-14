@@ -1,0 +1,12 @@
+# Line endings and file types.
+#
+# This asks git for LF line endings on text files, so a checkout on Windows
+# cannot quietly turn a plugin file into CRLF and hand a Zen Cart store a file
+# that differs byte-for-byte from the one that was tested.
+* text=auto eol=lf
+
+# Explicit for the file types this plugin ships.
+*.php  text eol=lf
+*.html text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
