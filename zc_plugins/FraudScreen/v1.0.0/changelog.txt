@@ -4,16 +4,11 @@ v1.0.0
 - Initial release.
 - Scores orders after creation against configurable signals: watched telephone
   numbers, email patterns, billing/delivery state and country mismatches,
-  watched product models, and repeat use of a phone number or delivery address.
+  watched product models, and repeat use of a phone number or delivery address
+  by a different customer.
 - Holds orders reaching the threshold in a configurable order status and records
   the score and reasons in the order history.
+- Registers its configuration group on the admin Configuration menu.
 - Optional alert email and optional per-order decision logging.
 - Screening never interrupts checkout; a false positive delays an order rather
   than losing the sale.
-
-v1.0.1
-- FIX: register the configuration group on the admin Configuration menu. v1.0.0
-  created the group and its settings but no admin_pages entry, so the settings
-  existed in the database with no way to reach them from the menu.
-- Adds admin/includes/languages/english/extra_definitions/lang.fraud_screen_admin.php
-  supplying BOX_CONFIGURATION_FRAUD_SCREEN, the menu label.
