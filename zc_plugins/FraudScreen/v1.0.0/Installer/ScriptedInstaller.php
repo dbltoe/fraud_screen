@@ -149,6 +149,25 @@ class ScriptedInstaller extends ScriptedInstallBase
             'set_function' => $on_off,
         ]);
 
+        // -----
+        // Register the configuration group on the admin's Configuration menu. Creating the
+        // group and its keys is not enough on its own - without this row the settings exist
+        // in the database but there is no way to reach them from the menu.
+        //
+        if (function_exists('zen_register_admin_page') && function_exists('zen_page_key_exists')) {
+            if (!zen_page_key_exists('configFraudScreen')) {
+                zen_register_admin_page(
+                    'configFraudScreen',
+                    'BOX_CONFIGURATION_FRAUD_SCREEN',
+                    'FILENAME_CONFIGURATION',
+                    'gID=' . $group_id,
+                    'configuration',
+                    'Y',
+                    $group_id
+                );
+            }
+        }
+
         return true;
     }
 
@@ -171,6 +190,10 @@ class ScriptedInstaller extends ScriptedInstallBase
             'FRAUD_SCREEN_NOTIFY_EMAIL',
             'FRAUD_SCREEN_LOG',
         ]);
+
+        if (function_exists('zen_deregister_admin_pages')) {
+            zen_deregister_admin_pages(['configFraudScreen']);
+        }
 
         $this->deleteConfigurationGroup('Fraud Screen', true);
 

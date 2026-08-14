@@ -10,3 +10,10 @@ v1.0.0
 - Optional alert email and optional per-order decision logging.
 - Screening never interrupts checkout; a false positive delays an order rather
   than losing the sale.
+
+v1.0.1
+- FIX: register the configuration group on the admin Configuration menu. v1.0.0
+  created the group and its settings but no admin_pages entry, so the settings
+  existed in the database with no way to reach them from the menu.
+- Adds admin/includes/languages/english/extra_definitions/lang.fraud_screen_admin.php
+  supplying BOX_CONFIGURATION_FRAUD_SCREEN, the menu label.
