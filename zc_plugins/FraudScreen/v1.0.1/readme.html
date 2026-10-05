@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Zen Cart: Fraud Screen v1.0.0</title>
+<title>Zen Cart: Fraud Screen v1.0.1</title>
 <style>
  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; line-height: 1.55; max-width: 60em; margin: 2em auto; padding: 0 1.5em; color: #222; }
  h1 { border-bottom: 2px solid #ddd; padding-bottom: .3em; }
@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<h1>Zen Cart: Fraud Screen v1.0.0</h1>
+<h1>Zen Cart: Fraud Screen v1.0.1</h1>
 
 <p>Scores each incoming order against configurable fraud signals and, when the score reaches your
 threshold, moves the order to a review status and records why.</p>
@@ -118,15 +118,18 @@ log output. Zero the country rule if international shipping is normal for you.</
 sales into authorisations? <strong>No.</strong> It never touches your payment configuration, and it
 cannot &mdash; by the time it runs, the card has already been processed.</p>
 
-<p>The sequence in <code>includes/modules/checkout_process.php</code> is fixed:</p>
+<p>The sequence is fixed, in the same order on every release from 1.5.8 through 3.0.0 (line numbers from Zen Cart 2.2.2):</p>
 
 <table>
-<tr><th>Line</th><th>What happens</th></tr>
-<tr><td>110</td><td><code>$payment_modules-&gt;before_process()</code> &mdash; the card is charged or authorised</td></tr>
-<tr><td>120</td><td>the order record is created</td></tr>
-<tr><td>126</td><td>the order's products are written</td></tr>
-<tr><td>128</td><td><code>NOTIFY_CHECKOUT_PROCESS_AFTER_ORDER_CREATE_ADD_PRODUCTS</code> &mdash; <strong>this plugin runs here</strong></td></tr>
+<tr><th>Where</th><th>What happens</th></tr>
+<tr><td><code>includes/modules/checkout_process.php</code> line 122</td><td><code>$payment_modules-&gt;before_process()</code> &mdash; the card is charged or authorized</td></tr>
+<tr><td>line 133</td><td>the order record is created</td></tr>
+<tr><td>line 138</td><td>the order's products are written</td></tr>
+<tr><td><code>includes/modules/pages/checkout_process/header_php.php</code> line 16</td><td><code>$payment_modules-&gt;after_process()</code> &mdash; the payment module records its result, and may set the order's status</td></tr>
+<tr><td>line 18</td><td><code>NOTIFY_CHECKOUT_PROCESS_BEFORE_CART_RESET</code> &mdash; <strong>this plugin runs here</strong></td></tr>
 </table>
+
+<p>It runs after the payment module has finished on purpose. A module that sets the order's status in <code>after_process()</code> (the Authorize.Net Accept.js module does) would otherwise put a held order straight back to its paid status.</p>
 
 <p>So the payment outcome is already settled. All this plugin does afterwards is change the order's
 status and write a comment.</p>
@@ -234,6 +237,15 @@ is better than catching it afterwards. Use both.</p>
 It does not alter any order it previously held; those keep the status and comments it applied.</p>
 
 <h2>Version history</h2>
+
+<h3>v1.0.1</h3>
+<ul>
+  <li>Fixed: a held order could be put straight back to its paid status. The hold was applied before the
+      payment module's <code>after_process()</code>, and a module that sets the order's status there (the
+      Authorize.Net Accept.js module does) overwrote it. Screening now runs at
+      <code>NOTIFY_CHECKOUT_PROCESS_BEFORE_CART_RESET</code>, after the payment module has finished.</li>
+  <li>Upgrade in Plugin Manager; no settings change.</li>
+</ul>
 
 <h3>v1.0.0</h3>
 <ul>

@@ -1,13 +1,13 @@
-# Zen Cart: Fraud Screen v1.0.0
+# Zen Cart: Fraud Screen v1.0.1
 
 Scores each incoming order against configurable fraud signals and, when the score reaches your
 threshold, moves the order to a review status and records why.
 
-Screening happens **after** the order is created rather than during checkout, so the shopper never
-sees an error and a false positive delays an order instead of losing a sale.
+Screening happens **after** the order is created and the payment module has finished, rather than
+during checkout, so the shopper never sees an error and a false positive delays an order instead of losing a sale.
 
 Compatible with Zen Cart v2.1.0 through the current v3.0.0-track `master`, packaged as an
-encapsulated plugin (`zc_plugins/`). See `zc_plugins/FraudScreen/v1.0.0/readme.html` for full
+encapsulated plugin (`zc_plugins/`). See `zc_plugins/FraudScreen/v1.0.1/readme.html` for full
 installation instructions, tuning guidance and version history.
 
 ## Why it exists

@@ -2,8 +2,16 @@
 /**
  * Fraud Screen - order screening observer.
  *
- * Scores an order once it has been created and, if it reaches the configured threshold,
- * moves it to a review status and records the reasons in the order history.
+ * Scores an order once it has been created and paid and, if it reaches the configured
+ * threshold, moves it to a review status and records the reasons in the order history.
+ *
+ * It runs at NOTIFY_CHECKOUT_PROCESS_BEFORE_CART_RESET, after the payment module's
+ * after_process(). A module's after_process() may set the order's status itself (the
+ * Authorize.Net Accept.js module does, through zen_update_orders_history), so a hold put
+ * on any earlier, at NOTIFY_CHECKOUT_PROCESS_AFTER_ORDER_CREATE_ADD_PRODUCTS as v1.0.0
+ * first did, was silently put back to the paid status. The same order on every release
+ * from 1.5.8 through 3.0.0: after_process() is line 16 of
+ * includes/modules/pages/checkout_process/header_php.php, this notifier line 18.
  *
  * Deliberately runs *after* the order exists rather than blocking at checkout:
  *  - the shopper never sees an error, so a false positive costs a delay, not a sale;
@@ -24,12 +32,12 @@ class zcObserverFraudScreen extends base
 
     public function __construct()
     {
-        $this->attach($this, ['NOTIFY_CHECKOUT_PROCESS_AFTER_ORDER_CREATE_ADD_PRODUCTS']);
+        $this->attach($this, ['NOTIFY_CHECKOUT_PROCESS_BEFORE_CART_RESET']);
     }
 
     public function update(&$callingClass, $notifier, $paramsArray = [], &$orderObject = null)
     {
-        if ($notifier !== 'NOTIFY_CHECKOUT_PROCESS_AFTER_ORDER_CREATE_ADD_PRODUCTS') {
+        if ($notifier !== 'NOTIFY_CHECKOUT_PROCESS_BEFORE_CART_RESET') {
             return;
         }
 
@@ -38,8 +46,8 @@ class zcObserverFraudScreen extends base
                 return;
             }
 
-            // The notifier is raised as notify($event, $insert_id, $order), so the order id
-            // arrives as $paramsArray and the order object as the next parameter.
+            // The notifier is raised as notify($event, $insert_id), so the order id arrives
+            // as $paramsArray and the order object comes from the checkout's global $order.
             $oID = (int)(is_scalar($paramsArray) ? $paramsArray : 0);
             if ($oID <= 0) {
                 return;

@@ -1,5 +1,13 @@
 Fraud Screen for Zen Cart
 
+v1.0.1
+- Fixed: a held order could be put straight back to its paid status. The hold
+  was applied at NOTIFY_CHECKOUT_PROCESS_AFTER_ORDER_CREATE_ADD_PRODUCTS, before
+  the payment module's after_process(), and a module that sets the order's
+  status there (the Authorize.Net Accept.js module does) overwrote it. Screening
+  now runs at NOTIFY_CHECKOUT_PROCESS_BEFORE_CART_RESET, after the payment module
+  has finished, on every release from 1.5.8 through 3.0.0.
+
 v1.0.0
 - Initial release.
 - Scores orders after creation against configurable signals: watched telephone
