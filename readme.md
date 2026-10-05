@@ -52,7 +52,7 @@ produced the returning-customer exemption.
 
 **Never use a backslash in an email pattern.** Zen Cart strips backslashes from every configuration
 value as it is saved — `zen_db_prepare_input()` calls `stripslashes()` — so `\.` silently becomes `.`
-and the pattern quietly matches more than intended. This is core behaviour affecting every plugin.
+and the pattern quietly matches more than intended. This is core behavior affecting every plugin.
 
 Use character classes instead, which need no escaping:
 
