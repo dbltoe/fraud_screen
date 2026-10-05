@@ -9,7 +9,7 @@ Form: https://www.zen-cart.com/plugins/submit
 | GitHub Repository URL | https://github.com/dbltoe/fraud_screen |
 | Forum Support Thread | https://www.zen-cart.com/threads/207393 (link existing) |
 | Release Version | v1.0.2 |
-| ZIP | fraud_screen_v1.0.2.zip (the GitHub release v1.0.2 asset, swapped 2026-10-05 for the manifest that lists 2.3.0; sha256 ...) |
+| ZIP | fraud_screen_v1.0.2.zip (the GitHub release v1.0.2 asset, swapped 2026-10-05 for the manifest that lists 2.3.0; sha256 fb2241ad...) |
 | Encapsulated? | Yes |
 | Compatible Zen Cart versions | 2.1.0, 2.2.0, 2.2.1, 2.2.2, 2.3.0, 3.0.0 (as the manifest declares) |
 
