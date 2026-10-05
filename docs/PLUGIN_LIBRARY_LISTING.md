@@ -2,6 +2,8 @@
 
 Form: https://www.zen-cart.com/plugins/submit
 
+**SUBMITTED 2026-10-05** by Claude in Chrome (signed in as dbltoe) at John's request: "Your plugin and initial release have been submitted and are pending review." Support thread given as a pasted link. On acceptance the Library writes the real pluginId into its served copy of the zip; read the Plugin ID off the listing page.
+
 | Field | Value |
 |---|---|
 | Name | Fraud Screen |
