@@ -42,7 +42,12 @@ class zcObserverFraudScreen extends base
         }
 
         try {
-            if (!defined('FRAUD_SCREEN_STATUS') || FRAUD_SCREEN_STATUS !== 'true') {
+            // Switched off with logging on is the dry run the setup steps describe: every
+            // order is scored and logged, with what would have happened, and nothing is
+            // held. Switched off with logging off does nothing at all.
+            $enabled = defined('FRAUD_SCREEN_STATUS') && FRAUD_SCREEN_STATUS === 'true';
+            $logging = defined('FRAUD_SCREEN_LOG') && FRAUD_SCREEN_LOG === 'true';
+            if (!$enabled && !$logging) {
                 return;
             }
 
@@ -72,13 +77,13 @@ class zcObserverFraudScreen extends base
             $this->checkVelocity($order, $oID);
 
             $threshold = (int)(defined('FRAUD_SCREEN_THRESHOLD') ? FRAUD_SCREEN_THRESHOLD : 100);
-            $held = ($threshold > 0 && $this->score >= $threshold);
+            $reached = ($threshold > 0 && $this->score >= $threshold);
 
-            if (defined('FRAUD_SCREEN_LOG') && FRAUD_SCREEN_LOG === 'true') {
-                $this->log($oID, $held, $threshold);
+            if ($logging) {
+                $this->log($oID, $reached, $threshold, $enabled);
             }
 
-            if ($held) {
+            if ($reached && $enabled) {
                 $this->holdOrder($oID, $threshold);
             }
         } catch (\Throwable $e) {
@@ -262,15 +267,21 @@ class zcObserverFraudScreen extends base
         @zen_mail('', $to, $subject, $body, $store, $from, ['EMAIL_MESSAGE_HTML' => nl2br($body)], 'default');
     }
 
-    protected function log(int $oID, bool $held, int $threshold): void
+    /** One line per order. While switched off (the dry run) it says what would have happened. */
+    protected function log(int $oID, bool $reached, int $threshold, bool $enabled): void
     {
+        if ($enabled) {
+            $verdict = $reached ? 'HELD' : 'passed';
+        } else {
+            $verdict = $reached ? 'WOULD HOLD (dry run)' : 'passed (dry run)';
+        }
         $line = sprintf(
             "[%s] order #%d score=%d threshold=%d %s reasons=[%s]\n",
             date('Y-m-d H:i:s'),
             $oID,
             $this->score,
             $threshold,
-            $held ? 'HELD' : 'passed',
+            $verdict,
             implode('; ', $this->reasons)
         );
         @error_log($line, 3, DIR_FS_LOGS . '/fraud_screen.log');

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Zen Cart: Fraud Screen v1.0.1</title>
+<title>Zen Cart: Fraud Screen v1.0.2</title>
 <style>
  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; line-height: 1.55; max-width: 60em; margin: 2em auto; padding: 0 1.5em; color: #222; }
  h1 { border-bottom: 2px solid #ddd; padding-bottom: .3em; }
@@ -16,13 +16,15 @@
 </head>
 <body>
 
-<h1>Zen Cart: Fraud Screen v1.0.1</h1>
+<h1>Zen Cart: Fraud Screen v1.0.2</h1>
 
 <p>Scores each incoming order against configurable fraud signals and, when the score reaches your
 threshold, moves the order to a review status and records why.</p>
 
 <p>Requires Zen Cart v2.1.0 or later. Install through <strong>Admin &rarr; Modules &rarr; Plugin
 Manager</strong>.</p>
+
+<p>Questions and support: the <a href="https://www.zen-cart.com/threads/207393?page=1#post-1347418">Fraud Screen support thread</a> on the Zen Cart forum.</p>
 
 <h2>What it does, and what it deliberately does not do</h2>
 
@@ -94,7 +96,8 @@ After saving, reopen the setting and confirm it reads back exactly as you typed 
       <code>Fraud Review</code>, and select it as the hold status. Held orders are then trivial to find.</li>
   <li>Set <strong>Log Every Screening Decision</strong> to <code>true</code> and leave the screen
       switched <strong>off</strong> for a few days. It writes what <em>would</em> have happened to
-      <code>logs/fraud_screen.log</code>.</li>
+      <code>logs/fraud_screen.log</code>: each order's line ends <code>WOULD HOLD (dry run)</code> or
+      <code>passed (dry run)</code>, with its score and reasons, and nothing is held.</li>
   <li>Read that log. If it would have held orders you recognize as genuine, adjust the points or the
       threshold before going live.</li>
   <li>Only then set <strong>Enable Fraud Screen</strong> to <code>true</code>.</li>
@@ -103,7 +106,7 @@ After saving, reopen the setting and confirm it reads back exactly as you typed 
 <p>Step 4 matters. On the store this was written for, a dry run over 3,300 orders caught all eight
 known fraudulent orders and held nothing else &mdash; but that was only true after tuning. The first
 attempt held a legitimate Canadian customer shipping a gift into Vermont, because the velocity rule
-was penalising her for having ordered before. That is what produced the returning-customer exemption
+was penalizing her for having ordered before. That is what produced the returning-customer exemption
 described above.</p>
 
 <h2>Suggested starting point</h2>
@@ -202,7 +205,7 @@ bank refused it. An AVS/CVV rule would have waved that one straight through.
 <ol>
   <li><strong>Buyer IP address outside your operating country.</strong> Every order in the group came
       from a foreign IP, several Brazilian, while the billing and delivery addresses were all domestic.
-      Start this as <em>Alert</em>, check a week of genuine traffic for travelling customers and VPN
+      Start this as <em>Alert</em>, check a week of genuine traffic for traveling customers and VPN
       users, then consider promoting it to 3D Secure.</li>
   <li><strong>Shipping ZIP code mismatch.</strong> Seven of the eight orders billed to one state and
       shipped to another. Legitimate for gifts, so pair it with something else or use Alert rather
@@ -210,7 +213,7 @@ bank refused it. An AVS/CVV rule would have waved that one straight through.
   <li><strong>Payment velocity.</strong> Repeated attempts within 24 hours, which is exactly what card
       testing looks like.</li>
   <li><strong>AVS mismatch and invalid CVV.</strong> Worth having, but as a backstop rather than the
-      main defence, for the reason above.</li>
+      main defense, for the reason above.</li>
 </ol>
 
 <p>Square also provides a <strong>Block List</strong>, which bans a specific card from all future
@@ -241,6 +244,16 @@ is better than catching it afterwards. Use both.</p>
 It does not alter any order it previously held; those keep the status and comments it applied.</p>
 
 <h2>Version history</h2>
+
+<h3>v1.0.2</h3>
+<ul>
+  <li>Fixed: the dry run did nothing. With the screen switched off and <strong>Log Every Screening
+      Decision</strong> on, as the setup steps say, no order was scored or logged. It now logs every
+      order with what would have happened (<code>WOULD HOLD (dry run)</code> or <code>passed (dry run)</code>)
+      and holds nothing. Switched on, nothing changes.</li>
+  <li>A <strong>Forum Support Thread</strong> button beside Read Me and GitHub in Plugin Manager.</li>
+  <li>Upgrade in Plugin Manager; no settings change.</li>
+</ul>
 
 <h3>v1.0.1</h3>
 <ul>

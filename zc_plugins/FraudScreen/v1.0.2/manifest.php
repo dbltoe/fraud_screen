@@ -8,7 +8,7 @@
  * @version $Id: manifest.php 2026-08-13 19:40:00Z dbltoe $
  */
 // -----
-// Read Me / GitHub buttons shown in the Plugin Manager's info box, matching the pattern
+// Read Me / GitHub / Forum Support Thread buttons shown in the Plugin Manager's info box, matching the pattern
 // established for Admin Add Customer and Social Contact Footer. The Read Me URL is derived
 // from this file's own on-disk location rather than a hardcoded version string, so it
 // can't go stale on a future version bump. Zen Cart's shipped zc_plugins/.htaccess denies
@@ -17,6 +17,8 @@
 $fsPluginRelativeDir = basename(dirname(__DIR__)) . '/' . basename(__DIR__);
 $fsReadmeUrl = (defined('DIR_WS_CATALOG') ? DIR_WS_CATALOG : '/') . 'zc_plugins/' . $fsPluginRelativeDir . '/readme.html';
 $fsGithubUrl = 'https://github.com/dbltoe/fraud_screen';
+// The opening post of the support thread (every free dbltoe plugin has this button).
+$fsForumUrl = 'https://www.zen-cart.com/threads/207393?page=1#post-1347418';
 $fsButtonGap = '6px';
 $fsLinks =
     '<div style="margin:10px 0 0;padding:0 0 0 ' . $fsButtonGap . '">'
@@ -26,10 +28,15 @@ $fsLinks =
     . '<a href="' . $fsGithubUrl . '" target="_blank" rel="noopener noreferrer"'
     . ' class="btn btn-primary" role="button"'
     . ' style="margin:0 ' . $fsButtonGap . ' 0 0">GitHub</a>'
+    . ($fsForumUrl !== ''
+        ? '<a href="' . $fsForumUrl . '" target="_blank" rel="noopener noreferrer"'
+          . ' class="btn btn-primary" role="button"'
+          . ' style="margin:0 ' . $fsButtonGap . ' 0 0">Forum Support Thread</a>'
+        : '')
     . '</div>';
 
 return [
-    'pluginVersion' => 'v1.0.1',
+    'pluginVersion' => 'v1.0.2',
     'pluginName' => 'Fraud Screen',
     'pluginDescription' =>
         'Scores each incoming order against configurable fraud signals and, when the score reaches your '
@@ -42,9 +49,9 @@ return [
         . 'Installs switched off. Configure the rules, run in log-only mode for a few days to see what would '
         . 'have been held, then enable it.' . $fsLinks,
     'pluginAuthor' => 'My Zen Cart Host (dbltoe)',
-    'pluginId' => '0',  // assigned once the Zen Cart forum thread exists
+    'pluginId' => '0',  // the Plugins Library writes the real id into its copy on acceptance
     // -----
-    // Uses only the notifier NOTIFY_CHECKOUT_PROCESS_AFTER_ORDER_CREATE_ADD_PRODUCTS and the
+    // Uses only the notifier NOTIFY_CHECKOUT_PROCESS_BEFORE_CART_RESET and the
     // encapsulated-plugin installer helpers, both present since v2.1.0. Listed through the
     // v3.0.0 track since nothing here depends on version-specific core internals.
     //

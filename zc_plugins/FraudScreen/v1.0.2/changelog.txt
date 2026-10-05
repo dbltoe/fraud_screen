@@ -1,5 +1,13 @@
 Fraud Screen for Zen Cart
 
+v1.0.2
+- Fixed: the dry run did nothing. With the screen switched off and Log Every
+  Screening Decision on, as the setup steps say, no order was scored or logged.
+  It now logs every order with what would have happened (WOULD HOLD (dry run)
+  or passed (dry run)) and holds nothing. Switched on, nothing changes.
+- A Forum Support Thread button beside Read Me and GitHub in Plugin Manager.
+- Upgrade in Plugin Manager; no settings change.
+
 v1.0.1
 - Fixed: a held order could be put straight back to its paid status. The hold
   was applied at NOTIFY_CHECKOUT_PROCESS_AFTER_ORDER_CREATE_ADD_PRODUCTS, before

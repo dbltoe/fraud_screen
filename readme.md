@@ -1,4 +1,4 @@
-# Zen Cart: Fraud Screen v1.0.1
+# Zen Cart: Fraud Screen v1.0.2
 
 Scores each incoming order against configurable fraud signals and, when the score reaches your
 threshold, moves the order to a review status and records why.
@@ -7,7 +7,7 @@ Screening happens **after** the order is created and the payment module has fini
 during checkout, so the shopper never sees an error and a false positive delays an order instead of losing a sale.
 
 Compatible with Zen Cart v2.1.0 through the current v3.0.0-track `master`, packaged as an
-encapsulated plugin (`zc_plugins/`). See `zc_plugins/FraudScreen/v1.0.1/readme.html` for full
+encapsulated plugin (`zc_plugins/`). See `zc_plugins/FraudScreen/v1.0.2/readme.html` for full
 installation instructions, tuning guidance and version history.
 
 ## Why it exists
@@ -45,7 +45,7 @@ Dry-run over 3,300 orders on the store it was written for:
 - 0 false positives
 
 That was only true after tuning. The first attempt flagged a legitimate Canadian customer shipping a
-gift into Vermont, because the velocity rule penalised her for having ordered before — which is what
+gift into Vermont, because the velocity rule penalized her for having ordered before — which is what
 produced the returning-customer exemption.
 
 ## A Zen Cart quirk that will catch you out
@@ -73,6 +73,6 @@ Copy the `zc_plugins/FraudScreen` directory into your store's `zc_plugins/`, the
 It installs switched **off**. Configure the rules, run in log-only mode for a few days to see what
 would have been held, then enable it.
 
-## Licence
+## License
 
 GNU GPL v2.0, consistent with Zen Cart.
