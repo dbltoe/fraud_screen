@@ -1,4 +1,4 @@
-**Fraud Prevention forum (forum 8), new thread:** NOT POSTED YET. Post after v1.0.2 is released (the dry-run sentence is only true from v1.0.2). Suggested title: A free plugin that holds suspicious orders for review
+**Fraud Prevention forum (forum 8), new thread:** POSTED by John 2026-10-05 as thread 207394 "Fraud Screen v1.0.2", opening post 1347419, https://www.zen-cart.com/threads/207394?page=1#post-1347419 (rendering checked logged out; links to support thread 207393).
 
 ---
 
