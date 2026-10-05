@@ -55,7 +55,7 @@ return [
     // encapsulated-plugin installer helpers, both present since v2.1.0. Listed through the
     // v3.0.0 track since nothing here depends on version-specific core internals.
     //
-    'zcVersions' => ['v2.1.0', 'v2.2.0', 'v2.2.1', 'v2.2.2', 'v3.0.0'],
+    'zcVersions' => ['v2.1.0', 'v2.2.0', 'v2.2.1', 'v2.2.2', 'v2.3.0', 'v3.0.0'],
     'changelog' => 'readme.html',
     'github_repo' => $fsGithubUrl,
     'pluginGroups' => [],
