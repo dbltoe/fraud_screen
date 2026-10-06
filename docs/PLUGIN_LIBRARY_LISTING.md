@@ -5,7 +5,9 @@ Support thread: https://www.zen-cart.com/threads/207393
 
 **Plugin ID 2464.** The Library renumbered Fraud Screen on 6 October 2026 from 2266, an ID it had also given to "ZX Optimized Images". ping.zen-cart.com/plugincheck/2464 answers "Fraud Screen" (checked 2026-10-06). The manifest carries `'pluginId' => 2464,` from v1.0.3 on, as a bare integer: the Library's stamper only matches an unquoted number, so v1.0.2's quoted `'0'` could not be corrected in the zip it serves, and the Library's admin asked for a release carrying 2464.
 
-## v1.0.3 release (NOT SUBMITTED)
+## v1.0.3 release (SUBMITTED 2026-10-06, pending review)
+
+Submitted by Claude in Chrome (signed in as dbltoe) at John's request with exactly the fields below: "Your release has been submitted and is pending review." The form pre-ticked v1.0.2's versions; the ticked set was checked before submitting.
 
 Form: https://www.zen-cart.com/plugins/fraud-screen/releases/new
 
