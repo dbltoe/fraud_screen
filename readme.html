@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Zen Cart: Fraud Screen v1.0.2</title>
+<title>Zen Cart: Fraud Screen v1.0.3</title>
 <style>
  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; line-height: 1.55; max-width: 60em; margin: 2em auto; padding: 0 1.5em; color: #222; }
  h1 { border-bottom: 2px solid #ddd; padding-bottom: .3em; }
@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<h1>Zen Cart: Fraud Screen v1.0.2</h1>
+<h1>Zen Cart: Fraud Screen v1.0.3</h1>
 
 <p>Scores each incoming order against configurable fraud signals and, when the score reaches your
 threshold, moves the order to a review status and records why.</p>
@@ -244,6 +244,22 @@ is better than catching it afterwards. Use both.</p>
 It does not alter any order it previously held; those keep the status and comments it applied.</p>
 
 <h2>Version history</h2>
+
+<h3>v1.0.3 (2026-10-06)</h3>
+<ul>
+  <li>Plugin ID is now 2464, the ID the Plugins Library assigned on 6 October 2026. Earlier releases
+      carried a placeholder the Library couldn't update, so Plugin Manager had no way to tell you about
+      updates.</li>
+  <li>No screening, code or settings changes. Upgrading is optional and only matters for update
+      notices.</li>
+  <li>Upgrading: put <code>v1.0.3</code> beside <code>v1.0.2</code> in <code>zc_plugins/FraudScreen/</code>
+      and click <strong>Upgrade</strong> in Plugin Manager; your settings and order history are kept.
+      Zen Cart 2.2.0 and later pick up the new ID by themselves. Zen Cart 2.1.x keeps the ID it stored
+      at first install, so on 2.1.x also run
+      <code>UPDATE plugin_control SET zc_contrib_id = 2464 WHERE unique_key = 'FraudScreen';</code>
+      <strong>Admin &rarr; Tools &rarr; Install SQL Patches</strong> adds your table prefix itself; in
+      phpMyAdmin, add it to the table name (for example <code>zen_plugin_control</code>).</li>
+</ul>
 
 <h3>v1.0.2</h3>
 <ul>

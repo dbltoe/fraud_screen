@@ -36,7 +36,7 @@ $fsLinks =
     . '</div>';
 
 return [
-    'pluginVersion' => 'v1.0.2',
+    'pluginVersion' => 'v1.0.3',
     'pluginName' => 'Fraud Screen',
     'pluginDescription' =>
         'Scores each incoming order against configurable fraud signals and, when the score reaches your '
@@ -49,7 +49,10 @@ return [
         . 'Installs switched off. Configure the rules, run in log-only mode for a few days to see what would '
         . 'have been held, then enable it.' . $fsLinks,
     'pluginAuthor' => 'My Zen Cart Host (dbltoe)',
-    'pluginId' => '0',  // the Plugins Library writes the real id into its copy on acceptance
+    // The Plugins Library's Plugin ID for Fraud Screen (zen-cart.com/plugins/fraud-screen). It must stay
+    // an unquoted integer: the Library's stamper only matches a bare number, so a quoted value can't be
+    // corrected in the copy it serves.
+    'pluginId' => 2464,
     // -----
     // Uses only the notifier NOTIFY_CHECKOUT_PROCESS_BEFORE_CART_RESET and the
     // encapsulated-plugin installer helpers, both present since v2.1.0. Listed through the

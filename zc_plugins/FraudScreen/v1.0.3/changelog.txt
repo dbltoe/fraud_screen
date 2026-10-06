@@ -1,5 +1,19 @@
 Fraud Screen for Zen Cart
 
+v1.0.3 (2026-10-06)
+- Plugin ID is now 2464, the ID the Plugins Library assigned on 6 October
+  2026. Earlier releases carried a placeholder the Library couldn't update, so
+  Plugin Manager had no way to tell you about updates.
+- No screening, code or settings changes. Upgrading is optional and only
+  matters for update notices.
+- Upgrading: put v1.0.3 beside v1.0.2 in zc_plugins/FraudScreen/ and click
+  Upgrade in Plugin Manager; your settings and order history are kept. Zen Cart
+  2.2.0 and later pick up the new ID by themselves. Zen Cart 2.1.x keeps the ID
+  it stored at first install, so on 2.1.x also run:
+    UPDATE plugin_control SET zc_contrib_id = 2464 WHERE unique_key = 'FraudScreen';
+  Admin > Tools > Install SQL Patches adds your table prefix itself; in
+  phpMyAdmin, add it to the table name (for example zen_plugin_control).
+
 v1.0.2
 - Fixed: the dry run did nothing. With the screen switched off and Log Every
   Screening Decision on, as the setup steps say, no order was scored or logged.
