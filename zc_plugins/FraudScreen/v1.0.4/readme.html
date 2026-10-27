@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Zen Cart: Fraud Screen v1.0.3</title>
+<title>Zen Cart: Fraud Screen v1.0.4</title>
 <style>
  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; line-height: 1.55; max-width: 60em; margin: 2em auto; padding: 0 1.5em; color: #222; }
  h1 { border-bottom: 2px solid #ddd; padding-bottom: .3em; }
@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<h1>Zen Cart: Fraud Screen v1.0.3</h1>
+<h1>Zen Cart: Fraud Screen v1.0.4</h1>
 
 <p>Scores each incoming order against configurable fraud signals and, when the score reaches your
 threshold, moves the order to a review status and records why.</p>
@@ -91,7 +91,7 @@ After saving, reopen the setting and confirm it reads back exactly as you typed 
 
 <ol>
   <li>Install it. <strong>It installs switched off.</strong></li>
-  <li>Fill in the rules under <strong>Admin &rarr; Configuration &rarr; Fraud Screen</strong>.</li>
+  <li>Fill in the rules under <strong>Admin &rarr; Configuration &rarr; Fraud Screen</strong>. The plugin's <strong>Settings</strong> button in Plugin Manager opens the same page.</li>
   <li>Create a dedicated order status (Admin &rarr; Localization &rarr; Orders Status), such as
       <code>Fraud Review</code>, and select it as the hold status. Held orders are then trivial to find.</li>
   <li>Set <strong>Log Every Screening Decision</strong> to <code>true</code> and leave the screen
@@ -244,6 +244,19 @@ is better than catching it afterwards. Use both.</p>
 It does not alter any order it previously held; those keep the status and comments it applied.</p>
 
 <h2>Version history</h2>
+
+<h3>v1.0.4 (2026-10-27)</h3>
+<ul>
+  <li>Plugin Manager only: once the plugin is installed, its panel has a <strong>Settings</strong>
+      button that opens <strong>Configuration &rarr; Fraud Screen</strong>. It isn't shown before
+      Install or after Uninstall. The installer saves the panel again at Install, Upgrade and
+      Uninstall, because Zen Cart 2.1 otherwise keeps the panel it saw first.</li>
+  <li>The buttons are one row: ReadMe | Settings | Forum Thread | GitHub. &ldquo;Read Me&rdquo; is
+      now &ldquo;ReadMe&rdquo; and &ldquo;Forum Support Thread&rdquo; is now &ldquo;Forum
+      Thread&rdquo;, a little narrower so all four fit on one line.</li>
+  <li>No screening or settings changes. Upgrade in Plugin Manager; your settings and order history
+      are kept.</li>
+</ul>
 
 <h3>v1.0.3 (2026-10-06)</h3>
 <ul>

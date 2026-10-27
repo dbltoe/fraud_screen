@@ -10,6 +10,9 @@ use Zencart\PluginSupport\ScriptedInstaller as ScriptedInstallBase;
 
 class ScriptedInstaller extends ScriptedInstallBase
 {
+    /** plugin_control.unique_key: the zc_plugins folder name. */
+    public const PLUGIN_KEY = 'FraudScreen';
+
     protected function executeInstall()
     {
         $group_id = $this->getOrCreateConfigGroupId(
@@ -168,6 +171,21 @@ class ScriptedInstaller extends ScriptedInstallBase
             }
         }
 
+        // Last, so the Settings button finds the page registered above.
+        $this->fsRefreshPluginDescription();
+
+        return true;
+    }
+
+    /**
+     * Nothing to change in the settings between versions; this only saves the
+     * Plugin Manager panel again (see fsRefreshPluginDescription()). Core's
+     * own executeUpgrade() returns true, and so does this.
+     */
+    protected function executeUpgrade($oldVersion = null)
+    {
+        $this->fsRefreshPluginDescription();
+
         return true;
     }
 
@@ -197,6 +215,41 @@ class ScriptedInstaller extends ScriptedInstallBase
 
         $this->deleteConfigurationGroup('Fraud Screen', true);
 
+        // After the admin page is gone, so the saved panel has no Settings button.
+        $this->fsRefreshPluginDescription();
+
         return true;
+    }
+
+    /**
+     * Save the manifest's description again, now that the Settings page has
+     * been registered (install, upgrade) or removed (uninstall).
+     *
+     * Needed on v2.1 (and v1.5.8, v2.0), which store plugin_control.description
+     * only when Plugin Manager first sees the plugin, before Install, so the
+     * Settings button (built in manifest.php from the registered admin page)
+     * would never appear there. v2.2 and later rewrite the description from
+     * the manifest on every Plugin Manager visit, so this is a no-op there in
+     * effect. Core's own install/uninstall step changes only status and
+     * version, so this description stays.
+     *
+     * @return bool
+     */
+    protected function fsRefreshPluginDescription()
+    {
+        if (!defined('TABLE_PLUGIN_CONTROL')) {
+            return true;
+        }
+        $manifest = require dirname(__DIR__) . '/manifest.php';
+        if (!is_array($manifest) || !isset($manifest['pluginDescription'])) {
+            return true;
+        }
+
+        return $this->executeInstallerSql(
+            "UPDATE " . TABLE_PLUGIN_CONTROL . "
+                SET description = '" . $this->dbConn->prepare_input($manifest['pluginDescription']) . "'
+              WHERE unique_key = '" . $this->dbConn->prepare_input(self::PLUGIN_KEY) . "'
+              LIMIT 1"
+        );
     }
 }
