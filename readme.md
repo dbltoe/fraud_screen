@@ -1,4 +1,4 @@
-# Zen Cart: Fraud Screen v1.0.4
+# Zen Cart: Fraud Screen v1.1.0
 
 Scores each incoming order against configurable fraud signals and, when the score reaches your
 threshold, moves the order to a review status and records why.
@@ -7,7 +7,7 @@ Screening happens **after** the order is created and the payment module has fini
 during checkout, so the shopper never sees an error and a false positive delays an order instead of losing a sale.
 
 Compatible with Zen Cart v2.1.0 through the current v3.0.0-track `master`, packaged as an
-encapsulated plugin (`zc_plugins/`). See `zc_plugins/FraudScreen/v1.0.4/readme.html` for full
+encapsulated plugin (`zc_plugins/`). See `zc_plugins/FraudScreen/v1.1.0/readme.html` for full
 installation instructions, tuning guidance and version history.
 
 ## Why it exists
@@ -30,8 +30,17 @@ already blocked two of the addresses and the orders kept arriving under new ones
 | Watched product model | 40 |
 | Repeat phone or delivery address by a *different* customer | 35 |
 | Billing/delivery states differ | 30 |
+| Billing/delivery names differ | 0 (off) |
 
 An order is held once the total reaches the threshold (default 100).
+
+**Trusted customers** (v1.1.0): list customer IDs whose orders are never held, or trust a customer
+automatically after a number of completed orders. Only signed-in accounts can be trusted; a guest
+checkout never is, since anyone can type any email address.
+
+**Add-ons** (v1.1.0): three notifiers, `NOTIFY_FRAUD_SCREEN_SCORING`, `NOTIFY_FRAUD_SCREEN_BEFORE_HOLD`
+and `NOTIFY_FRAUD_SCREEN_HELD`, let another plugin add rules and release or annotate holds without
+touching Fraud Screen's files. Details in the readme's developer section.
 
 The velocity rule deliberately ignores returning customers: a phone number only counts if it appears
 on an earlier order under a different email address, and a delivery address only if used under a

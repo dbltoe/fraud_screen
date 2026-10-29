@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Zen Cart: Fraud Screen v1.0.4</title>
+<title>Zen Cart: Fraud Screen v1.1.0</title>
 <style>
  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; line-height: 1.55; max-width: 60em; margin: 2em auto; padding: 0 1.5em; color: #222; }
  h1 { border-bottom: 2px solid #ddd; padding-bottom: .3em; }
@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<h1>Zen Cart: Fraud Screen v1.0.4</h1>
+<h1>Zen Cart: Fraud Screen v1.1.0</h1>
 
 <p>Scores each incoming order against configurable fraud signals and, when the score reaches your
 threshold, moves the order to a review status and records why.</p>
@@ -62,6 +62,7 @@ rule except the phone list is meant to trigger a hold on its own.</p>
 <tr><td>Billing/delivery countries differ</td><td>50</td><td>Set to 0 if you ship internationally routinely.</td></tr>
 <tr><td>Watched product model</td><td>40</td><td>Prefix match, so <code>CAS-08XXX-Z</code> also matches <code>CAS-08XXX-Z (SR4)</code>.</td></tr>
 <tr><td>Repeat phone or delivery address</td><td>35</td><td>See below.</td></tr>
+<tr><td>Billing/delivery names differ</td><td>0 (off)</td><td>The billing name and the delivery name are different people. Gifts and work addresses trip it all the time, so if you use it keep it low (15&ndash;25) and let it add to other signals. A virtual order, with no delivery name, never counts.</td></tr>
 </table>
 
 <div class="note">
@@ -87,6 +88,29 @@ one. Use character classes instead, which need no escaping:
 After saving, reopen the setting and confirm it reads back exactly as you typed it.
 </div>
 
+<h2>Trusted customers</h2>
+
+<p>A screen that keeps holding a customer you know is genuine &mdash; a dropshipper, a regular who
+always ships to clients &mdash; is a screen that ends up switched off. Two settings exempt them. A
+trusted customer's order is still scored and logged (<code>passed (trusted: ...)</code>), but never
+held.</p>
+
+<ul>
+  <li><strong>Trusted Customers</strong>: customer ID numbers, comma-separated. The ID is the number
+      in <strong>Customers &rarr; Customers</strong>, not an email address.</li>
+  <li><strong>Trust After This Many Completed Orders</strong>, with <strong>Statuses That Count As
+      Completed</strong>: trusts a customer automatically once they have that many earlier orders in
+      those statuses (3 is Delivered on a standard install). 0 turns it off, which is the default.</li>
+</ul>
+
+<div class="note">
+<strong>Only signed-in customers can be trusted.</strong> At guest checkout the email address is
+whatever was typed, so trusting an address would let anyone skip the screen by typing a good
+customer's. Guest checkouts are never trusted, and that includes One Page Checkout's shared guest
+account, whose order history would otherwise make every guest look like a long-standing customer.
+Don't include your hold status among the completed statuses.
+</div>
+
 <h2>Setting it up</h2>
 
 <ol>
@@ -101,6 +125,10 @@ After saving, reopen the setting and confirm it reads back exactly as you typed 
   <li>Read that log. If it would have held orders you recognize as genuine, adjust the points or the
       threshold before going live.</li>
   <li>Only then set <strong>Enable Fraud Screen</strong> to <code>true</code>.</li>
+  <li>Optional: put an address in <strong>Notify This Address When An Order Is Held</strong>. Every
+      held order then sends it an email with the score, the reasons, the customer's name and email,
+      the order total and the payment method. It's empty by default, so nothing is sent until you fill
+      it in, and the store owner address isn't used automatically.</li>
 </ol>
 
 <p>Step 4 matters. On the store this was written for, a dry run over 3,300 orders caught all eight
@@ -230,7 +258,7 @@ who will not try again.</p>
 
 <h2>What it will not catch</h2>
 
-<p>A first offence from a new attacker with no history on your store scores nothing. This plugin
+<p>A first offense from a new attacker with no history on your store scores nothing. This plugin
 recognizes patterns, so it earns its keep on the second and subsequent orders from the same group,
 not the first.</p>
 
@@ -238,12 +266,55 @@ not the first.</p>
 failed address or security-code check, that stops the charge before it ever becomes an order, which
 is better than catching it afterwards. Use both.</p>
 
+<h2>For developers: add-on notifiers</h2>
+
+<p>From v1.1.0 another plugin (or a store's own observer) can add rules and decide holds without
+touching Fraud Screen's files. It raises three notifiers of its own; attach to them as to any core
+notifier. The first parameter is an array, passed by value; the others are passed by reference.</p>
+
+<table>
+<tr><th>Notifier</th><th>When</th><th>Parameters</th></tr>
+<tr><td><code>NOTIFY_FRAUD_SCREEN_SCORING</code></td><td>After the built-in rules, before the threshold test.</td>
+    <td><code>['orders_id', 'order']</code>; <code>&amp;$score</code> (int); <code>&amp;$reasons</code> (array of strings)</td></tr>
+<tr><td><code>NOTIFY_FRAUD_SCREEN_BEFORE_HOLD</code></td><td>The score has reached the threshold, before anything is held.</td>
+    <td><code>['orders_id', 'order', 'score', 'threshold', 'reasons', 'trusted', 'dry_run']</code>; <code>&amp;$hold</code> (bool: set <code>false</code> to release); <code>&amp;$note</code> (string added to the history comment)</td></tr>
+<tr><td><code>NOTIFY_FRAUD_SCREEN_HELD</code></td><td>After the order has been held, its history written and the alert sent.</td>
+    <td><code>['orders_id', 'score', 'threshold', 'reasons', 'status_id']</code></td></tr>
+</table>
+
+<ul>
+  <li>Write reasons as the built-in ones are, <code>'what was found (+N)'</code>, so the log, the
+      history and the alert read the same way.</li>
+  <li><code>trusted</code> is why the customer is trusted, or an empty string. A trusted order arrives
+      with <code>$hold</code> already <code>false</code>.</li>
+  <li>In the dry run (screen off, logging on) <code>$hold</code> arrives <code>false</code> and stays
+      false whatever an add-on sets: the dry run never holds.</li>
+  <li>An add-on that throws is caught and logged to <code>logs/fraud_screen.log</code> (when logging
+      is on), and screening carries on without it, so a broken add-on can't stop a hold.</li>
+</ul>
+
 <h2>Uninstalling</h2>
 
 <p>Uninstall through Plugin Manager. It removes its configuration keys and its configuration group.
 It does not alter any order it previously held; those keep the status and comments it applied.</p>
 
 <h2>Version history</h2>
+
+<h3>v1.1.0 (2026-10-29)</h3>
+<ul>
+  <li>New rule, off by default: billing and delivery names differ. Set its points under
+      <strong>Configuration &rarr; Fraud Screen</strong> if you want it.</li>
+  <li>Trusted customers: list customer IDs whose orders are never held, or trust customers
+      automatically after a number of completed orders. Signed-in accounts only; guest checkouts
+      are never trusted. See <em>Trusted customers</em> above.</li>
+  <li>The held-order alert email now names the customer and gives their email, the order total and
+      the payment method.</li>
+  <li>Three notifiers for add-ons to add rules and decide holds (see <em>For developers</em>).</li>
+  <li>The log now says why a scored order wasn't held: <code>passed (trusted: ...)</code> or
+      <code>passed (released by an add-on)</code>.</li>
+  <li>Upgrade in Plugin Manager: the four new settings are added switched off, and every setting
+      you already have keeps its value.</li>
+</ul>
 
 <h3>v1.0.4 (2026-10-27)</h3>
 <ul>

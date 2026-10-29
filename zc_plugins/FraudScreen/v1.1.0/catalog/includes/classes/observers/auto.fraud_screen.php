@@ -20,6 +20,12 @@
  *
  * Nothing in here is allowed to interrupt checkout. Every path is wrapped, and any
  * unexpected condition results in the order being left exactly as it was.
+ *
+ * Add-ons (Fraud Screen Pro, or a store's own observer) extend it through three
+ * notifiers, raised here and documented in the readme's developer section:
+ *  - NOTIFY_FRAUD_SCREEN_SCORING     after the built-in rules: add points and reasons;
+ *  - NOTIFY_FRAUD_SCREEN_BEFORE_HOLD the threshold is reached: release or force the hold;
+ *  - NOTIFY_FRAUD_SCREEN_HELD        after an order has been held.
  */
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
@@ -73,24 +79,87 @@ class zcObserverFraudScreen extends base
             $this->checkPhone($order);
             $this->checkEmail($order);
             $this->checkGeography($order);
+            $this->checkNames($order);
             $this->checkProducts($order);
             $this->checkVelocity($order, $oID);
+
+            // Add-on rules. Locals rather than the typed properties, so a hook that hands
+            // back the wrong type is cleaned up here instead of throwing a TypeError.
+            $score = $this->score;
+            $reasons = $this->reasons;
+            $this->raise('NOTIFY_FRAUD_SCREEN_SCORING', ['orders_id' => $oID, 'order' => $order], $score, $reasons);
+            $this->score = max(0, (int)$score);
+            $this->reasons = array_values(array_filter((array)$reasons, 'is_string'));
 
             $threshold = (int)(defined('FRAUD_SCREEN_THRESHOLD') ? FRAUD_SCREEN_THRESHOLD : 100);
             $reached = ($threshold > 0 && $this->score >= $threshold);
 
-            if ($logging) {
-                $this->log($oID, $reached, $threshold, $enabled);
+            $trusted = '';
+            $hold = false;
+            $note = '';
+            if ($reached) {
+                // Only asked once an order would be held, so a clean order costs no query.
+                $trusted = $this->trustedReason($oID);
+                $hold = ($enabled && $trusted === '');
+                $this->raise(
+                    'NOTIFY_FRAUD_SCREEN_BEFORE_HOLD',
+                    [
+                        'orders_id' => $oID,
+                        'order' => $order,
+                        'score' => $this->score,
+                        'threshold' => $threshold,
+                        'reasons' => $this->reasons,
+                        'trusted' => $trusted,
+                        'dry_run' => !$enabled,
+                    ],
+                    $hold,
+                    $note
+                );
+                // The dry run never holds, whatever a hook says.
+                $hold = ($enabled && (bool)$hold);
+                $note = is_string($note) ? trim($note) : '';
             }
 
-            if ($reached && $enabled) {
-                $this->holdOrder($oID, $threshold);
+            if ($logging) {
+                $this->log($oID, $this->verdict($reached, $hold, $trusted, $enabled), $threshold);
+            }
+
+            if ($hold) {
+                $status = $this->holdOrder($oID, $threshold, $note, $order);
+                if ($status > 0) {
+                    $this->raise('NOTIFY_FRAUD_SCREEN_HELD', [
+                        'orders_id' => $oID,
+                        'score' => $this->score,
+                        'threshold' => $threshold,
+                        'reasons' => $this->reasons,
+                        'status_id' => $status,
+                    ]);
+                }
             }
         } catch (\Throwable $e) {
             // Screening must never cost a sale. Swallow and, if logging is on, record why.
-            if (defined('FRAUD_SCREEN_LOG') && FRAUD_SCREEN_LOG === 'true') {
-                @error_log('[FraudScreen] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() . "\n", 3, DIR_FS_LOGS . '/fraud_screen.log');
-            }
+            $this->logError($e);
+        }
+    }
+
+    /**
+     * Raise one of Fraud Screen's own notifiers. An add-on that throws is logged and
+     * ignored, so a broken add-on can't switch off the built-in rules or stop a hold.
+     */
+    protected function raise(string $event, array $info, &$first = null, &$second = null): void
+    {
+        try {
+            $this->notify($event, $info, $first, $second);
+        } catch (\Throwable $e) {
+            $this->logError($e, $event);
+        }
+    }
+
+    protected function logError(\Throwable $e, string $event = ''): void
+    {
+        if (defined('FRAUD_SCREEN_LOG') && FRAUD_SCREEN_LOG === 'true') {
+            $where = ($event === '') ? '' : ' (add-on on ' . $event . ')';
+            @error_log('[FraudScreen]' . $where . ' ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() . "\n", 3, DIR_FS_LOGS . '/fraud_screen.log');
         }
     }
 
@@ -147,6 +216,20 @@ class zcObserverFraudScreen extends base
         $ship_country = strtolower(trim((string)($order->delivery['country']['title'] ?? $order->delivery['country'] ?? '')));
         if ($bill_country !== '' && $ship_country !== '' && $bill_country !== $ship_country) {
             $this->add((int)(defined('FRAUD_SCREEN_COUNTRY_MISMATCH_POINTS') ? FRAUD_SCREEN_COUNTRY_MISMATCH_POINTS : 0), 'bills to a different country than it ships to');
+        }
+    }
+
+    protected function checkNames($order): void
+    {
+        $points = (int)(defined('FRAUD_SCREEN_NAME_MISMATCH_POINTS') ? FRAUD_SCREEN_NAME_MISMATCH_POINTS : 0);
+        if ($points <= 0) {
+            return;
+        }
+        $bill_name = $this->personName($order->billing ?? []);
+        $ship_name = $this->personName($order->delivery ?? []);
+        // A virtual order has no delivery name, which is not a mismatch.
+        if ($bill_name !== '' && $ship_name !== '' && $bill_name !== $ship_name) {
+            $this->add($points, 'billing and delivery names differ');
         }
     }
 
@@ -221,15 +304,73 @@ class zcObserverFraudScreen extends base
         }
     }
 
+    // ------------------------------------------------------------- trust ----
+
+    /**
+     * Why this order's customer is trusted, or '' when they aren't.
+     *
+     * Trust belongs to a signed-in account, never to an email address: at guest checkout
+     * the email is whatever was typed, so trusting an address would let anyone skip the
+     * screen by typing a good customer's. And never to a guest: One Page Checkout files
+     * every guest order under one shared customer account, whose order history would
+     * otherwise make every guest look like a long-standing customer.
+     */
+    protected function trustedReason(int $oID): string
+    {
+        $cid = (int)($_SESSION['customer_id'] ?? 0);
+        if ($cid <= 0) {
+            return '';
+        }
+        if (function_exists('zen_in_guest_checkout') && zen_in_guest_checkout()) {
+            return '';
+        }
+        if (defined('CHECKOUT_ONE_GUEST_CUSTOMER_ID') && (int)CHECKOUT_ONE_GUEST_CUSTOMER_ID === $cid) {
+            return '';
+        }
+
+        $listed = $this->csv(defined('FRAUD_SCREEN_TRUSTED_CUSTOMERS') ? FRAUD_SCREEN_TRUSTED_CUSTOMERS : '');
+        if (in_array($cid, array_map('intval', $listed), true)) {
+            return 'customer #' . $cid . ' is on the trusted list';
+        }
+
+        $needed = (int)(defined('FRAUD_SCREEN_TRUSTED_AFTER_ORDERS') ? FRAUD_SCREEN_TRUSTED_AFTER_ORDERS : 0);
+        $statuses = array_values(array_filter(
+            array_map('intval', $this->csv(defined('FRAUD_SCREEN_TRUSTED_STATUSES') ? FRAUD_SCREEN_TRUSTED_STATUSES : '')),
+            static function ($id) {
+                return $id > 0;
+            }
+        ));
+        if ($needed <= 0 || $statuses === []) {
+            return '';
+        }
+        global $db;
+        if (!isset($db) || !is_object($db)) {
+            return '';
+        }
+        $check = $db->Execute(
+            "SELECT COUNT(*) AS total
+               FROM " . TABLE_ORDERS . "
+              WHERE customers_id = " . $cid . "
+                AND orders_id <> " . $oID . "
+                AND orders_status IN (" . implode(',', $statuses) . ")"
+        );
+        $total = $check->EOF ? 0 : (int)$check->fields['total'];
+        if ($total >= $needed) {
+            return 'customer #' . $cid . ' has ' . $total . ' completed orders';
+        }
+        return '';
+    }
+
     // -------------------------------------------------------------- actions ----
 
-    protected function holdOrder(int $oID, int $threshold): void
+    /** @return int the status the order was held in, 0 if it wasn't held */
+    protected function holdOrder(int $oID, int $threshold, string $note, $order): int
     {
         global $db;
 
         $status = (int)(defined('FRAUD_SCREEN_HOLD_STATUS_ID') ? FRAUD_SCREEN_HOLD_STATUS_ID : 1);
         if ($status <= 0) {
-            return;
+            return 0;
         }
 
         $comment = sprintf(
@@ -238,6 +379,9 @@ class zcObserverFraudScreen extends base
             $threshold,
             implode('; ', $this->reasons)
         );
+        if ($note !== '') {
+            $comment .= "\n" . $note;
+        }
 
         $db->Execute(
             "UPDATE " . TABLE_ORDERS . "
@@ -251,30 +395,60 @@ class zcObserverFraudScreen extends base
             zen_update_orders_history($oID, $comment, null, $status, 0);
         }
 
-        $this->notifyStaff($oID, $comment);
+        $this->notifyStaff($oID, $comment, $order);
+
+        return $status;
     }
 
-    protected function notifyStaff(int $oID, string $comment): void
+    protected function notifyStaff(int $oID, string $comment, $order): void
     {
         $to = trim((string)(defined('FRAUD_SCREEN_NOTIFY_EMAIL') ? FRAUD_SCREEN_NOTIFY_EMAIL : ''));
         if ($to === '' || !function_exists('zen_mail')) {
             return;
         }
-        $subject = sprintf('Order #%d held by Fraud Screen (score %d)', $oID, $this->score);
-        $body = $comment . "\n\n" . sprintf('Order number %d, on %s.', $oID, defined('STORE_NAME') ? STORE_NAME : '');
-        $from = defined('EMAIL_FROM') ? EMAIL_FROM : $to;
         $store = defined('STORE_NAME') ? STORE_NAME : '';
-        @zen_mail('', $to, $subject, $body, $store, $from, ['EMAIL_MESSAGE_HTML' => nl2br($body)], 'default');
+        $subject = sprintf('Order #%d held by Fraud Screen (score %d)', $oID, $this->score);
+
+        // Enough to find and judge the order without opening the admin first. The
+        // storefront doesn't know the admin folder's name, so there's no link to it.
+        $customer = is_array($order->customer ?? null) ? $order->customer : [];
+        $info = is_array($order->info ?? null) ? $order->info : [];
+        $name = trim(($customer['firstname'] ?? '') . ' ' . ($customer['lastname'] ?? ''));
+        $details = [sprintf('Order number %d, on %s.', $oID, $store)];
+        if ($name !== '' || !empty($customer['email_address'])) {
+            $details[] = 'Customer: ' . trim($name . ' ' . (empty($customer['email_address']) ? '' : '<' . $customer['email_address'] . '>'));
+        }
+        if (isset($info['total'])) {
+            $details[] = 'Order total: ' . $this->money($info);
+        }
+        if (!empty($info['payment_method'])) {
+            $details[] = 'Payment: ' . $info['payment_method'];
+        }
+        $body = $comment . "\n\n" . implode("\n", $details);
+
+        $from = defined('EMAIL_FROM') ? EMAIL_FROM : $to;
+        @zen_mail('', $to, $subject, $body, $store, $from, ['EMAIL_MESSAGE_HTML' => nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8'))], 'default');
+    }
+
+    protected function verdict(bool $reached, bool $hold, string $trusted, bool $enabled): string
+    {
+        if (!$reached) {
+            $verdict = 'passed';
+        } elseif ($hold) {
+            $verdict = 'HELD';
+        } elseif ($trusted !== '') {
+            $verdict = 'passed (trusted: ' . $trusted . ')';
+        } elseif ($enabled) {
+            $verdict = 'passed (released by an add-on)';
+        } else {
+            $verdict = 'WOULD HOLD';
+        }
+        return $enabled ? $verdict : $verdict . ' (dry run)';
     }
 
     /** One line per order. While switched off (the dry run) it says what would have happened. */
-    protected function log(int $oID, bool $reached, int $threshold, bool $enabled): void
+    protected function log(int $oID, string $verdict, int $threshold): void
     {
-        if ($enabled) {
-            $verdict = $reached ? 'HELD' : 'passed';
-        } else {
-            $verdict = $reached ? 'WOULD HOLD (dry run)' : 'passed (dry run)';
-        }
         $line = sprintf(
             "[%s] order #%d score=%d threshold=%d %s reasons=[%s]\n",
             date('Y-m-d H:i:s'),
@@ -313,5 +487,24 @@ class zcObserverFraudScreen extends base
     protected function digits($value): string
     {
         return preg_replace('/\D+/', '', (string)$value);
+    }
+
+    /** First and last name, lowercased with the spacing evened out, for comparing. */
+    protected function personName($address): string
+    {
+        if (!is_array($address)) {
+            return '';
+        }
+        $name = trim(($address['firstname'] ?? '') . ' ' . ($address['lastname'] ?? ''));
+        return strtolower(preg_replace('/\s+/', ' ', $name));
+    }
+
+    protected function money(array $info): string
+    {
+        global $currencies;
+        if (isset($currencies) && is_object($currencies) && method_exists($currencies, 'format')) {
+            return strip_tags($currencies->format($info['total'], true, (string)($info['currency'] ?? ''), $info['currency_value'] ?? ''));
+        }
+        return number_format((float)$info['total'], 2) . (empty($info['currency']) ? '' : ' ' . $info['currency']);
     }
 }

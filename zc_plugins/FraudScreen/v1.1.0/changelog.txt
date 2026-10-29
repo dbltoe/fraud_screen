@@ -1,5 +1,21 @@
 Fraud Screen for Zen Cart
 
+v1.1.0 (2026-10-29)
+- New rule, off by default: billing and delivery names differ. Set its points
+  under Configuration > Fraud Screen if you want it.
+- Trusted customers: list customer IDs whose orders are never held, or trust
+  customers automatically after a number of completed orders. Signed-in
+  accounts only; guest checkouts are never trusted.
+- The held-order alert email now names the customer and gives their email,
+  the order total and the payment method.
+- Three notifiers for add-ons to add rules and decide holds:
+  NOTIFY_FRAUD_SCREEN_SCORING, NOTIFY_FRAUD_SCREEN_BEFORE_HOLD and
+  NOTIFY_FRAUD_SCREEN_HELD. See the readme's developer section.
+- The log now says why a scored order wasn't held: passed (trusted: ...) or
+  passed (released by an add-on).
+- Upgrade in Plugin Manager: the four new settings are added switched off, and
+  every setting you already have keeps its value.
+
 v1.0.4 (2026-10-27)
 - Plugin Manager only: once the plugin is installed, its panel has a Settings
   button that opens Configuration > Fraud Screen. It isn't shown before Install

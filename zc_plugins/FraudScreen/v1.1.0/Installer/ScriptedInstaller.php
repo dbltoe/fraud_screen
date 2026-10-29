@@ -20,7 +20,41 @@ class ScriptedInstaller extends ScriptedInstallBase
             'Order screening rules used by the Fraud Screen plugin.'
         );
 
-        $on_off = 'zen_cfg_select_option([\'true\', \'false\'], ';
+        $this->fsAddSettings($group_id);
+
+        // -----
+        // Register the configuration group on the admin's Configuration menu. Creating the
+        // group and its keys is not enough on its own - without this row the settings exist
+        // in the database but there is no way to reach them from the menu.
+        //
+        if (function_exists('zen_register_admin_page') && function_exists('zen_page_key_exists')) {
+            if (!zen_page_key_exists('configFraudScreen')) {
+                zen_register_admin_page(
+                    'configFraudScreen',
+                    'BOX_CONFIGURATION_FRAUD_SCREEN',
+                    'FILENAME_CONFIGURATION',
+                    'gID=' . $group_id,
+                    'configuration',
+                    'Y',
+                    $group_id
+                );
+            }
+        }
+
+        // Last, so the Settings button finds the page registered above.
+        $this->fsRefreshPluginDescription();
+
+        return true;
+    }
+
+    /**
+     * Every setting, for Install and Upgrade alike. Core's addConfigurationKey() skips a
+     * key that already exists, so on Upgrade only the settings new in this version are
+     * added and every value the store has already set is left alone.
+     */
+    protected function fsAddSettings(int $group_id): void
+    {
+        $on_off ='zen_cfg_select_option([\'true\', \'false\'], ';
 
         // Deliberately installs switched OFF. The signals below need tuning to your own
         // order patterns first - a shop that ships internationally as a matter of course,
@@ -152,38 +186,55 @@ class ScriptedInstaller extends ScriptedInstallBase
             'set_function' => $on_off,
         ]);
 
-        // -----
-        // Register the configuration group on the admin's Configuration menu. Creating the
-        // group and its keys is not enough on its own - without this row the settings exist
-        // in the database but there is no way to reach them from the menu.
-        //
-        if (function_exists('zen_register_admin_page') && function_exists('zen_page_key_exists')) {
-            if (!zen_page_key_exists('configFraudScreen')) {
-                zen_register_admin_page(
-                    'configFraudScreen',
-                    'BOX_CONFIGURATION_FRAUD_SCREEN',
-                    'FILENAME_CONFIGURATION',
-                    'gID=' . $group_id,
-                    'configuration',
-                    'Y',
-                    $group_id
-                );
-            }
-        }
+        // ----- Added in v1.1.0.
 
-        // Last, so the Settings button finds the page registered above.
-        $this->fsRefreshPluginDescription();
+        $this->addConfigurationKey('FRAUD_SCREEN_NAME_MISMATCH_POINTS', [
+            'configuration_title' => 'Points: Billing And Delivery Names Differ',
+            'configuration_value' => '0',
+            'configuration_description' => 'Points when the billing name and the delivery name are different people. 0 turns the rule off. Gifts and work addresses trip it all the time, so keep it low (15-25) and let it add to other signals rather than hold an order on its own. Virtual orders, with no delivery name, never count.',
+            'configuration_group_id' => $group_id,
+            'sort_order' => 66,
+        ]);
 
-        return true;
+        $this->addConfigurationKey('FRAUD_SCREEN_TRUSTED_CUSTOMERS', [
+            'configuration_title' => 'Trusted Customers',
+            'configuration_value' => '',
+            'configuration_description' => 'Comma-separated customer ID numbers (the ID in Customers > Customers, not an email address) whose orders are never held. They are still scored, and logged as trusted. Only signed-in customers can be trusted: a guest checkout never is, since anyone can type any email address.',
+            'configuration_group_id' => $group_id,
+            'sort_order' => 92,
+            'set_function' => 'zen_cfg_textarea(',
+        ]);
+
+        $this->addConfigurationKey('FRAUD_SCREEN_TRUSTED_AFTER_ORDERS', [
+            'configuration_title' => 'Trust After This Many Completed Orders',
+            'configuration_value' => '0',
+            'configuration_description' => 'Trust a signed-in customer automatically once they have this many earlier orders in the statuses below. 0 turns it off. Guest checkouts never count, including One Page Checkout\'s shared guest account.',
+            'configuration_group_id' => $group_id,
+            'sort_order' => 94,
+        ]);
+
+        $this->addConfigurationKey('FRAUD_SCREEN_TRUSTED_STATUSES', [
+            'configuration_title' => 'Statuses That Count As Completed',
+            'configuration_value' => '3',
+            'configuration_description' => 'Comma-separated order status ID numbers that count toward automatic trust. 3 is Delivered on a standard install; see Localization > Orders Status for yours. Never include the hold status.',
+            'configuration_group_id' => $group_id,
+            'sort_order' => 96,
+        ]);
     }
 
     /**
-     * Nothing to change in the settings between versions; this only saves the
-     * Plugin Manager panel again (see fsRefreshPluginDescription()). Core's
+     * Adds the settings new since the installed version (existing values are kept) and
+     * saves the Plugin Manager panel again (see fsRefreshPluginDescription()). Core's
      * own executeUpgrade() returns true, and so does this.
      */
     protected function executeUpgrade($oldVersion = null)
     {
+        $group_id = $this->getOrCreateConfigGroupId(
+            'Fraud Screen',
+            'Order screening rules used by the Fraud Screen plugin.'
+        );
+        $this->fsAddSettings($group_id);
+
         $this->fsRefreshPluginDescription();
 
         return true;
@@ -207,6 +258,10 @@ class ScriptedInstaller extends ScriptedInstallBase
             'FRAUD_SCREEN_VELOCITY_POINTS',
             'FRAUD_SCREEN_NOTIFY_EMAIL',
             'FRAUD_SCREEN_LOG',
+            'FRAUD_SCREEN_NAME_MISMATCH_POINTS',
+            'FRAUD_SCREEN_TRUSTED_CUSTOMERS',
+            'FRAUD_SCREEN_TRUSTED_AFTER_ORDERS',
+            'FRAUD_SCREEN_TRUSTED_STATUSES',
         ]);
 
         if (function_exists('zen_deregister_admin_pages')) {

@@ -69,7 +69,7 @@ $fsLinks =
     . '</div>';
 
 return [
-    'pluginVersion' => 'v1.0.4',
+    'pluginVersion' => 'v1.1.0',
     'pluginName' => 'Fraud Screen',
     'pluginDescription' =>
         'Scores each incoming order against configurable fraud signals and, when the score reaches your '
