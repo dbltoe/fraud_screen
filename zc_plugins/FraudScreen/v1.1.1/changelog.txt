@@ -1,5 +1,14 @@
 Fraud Screen for Zen Cart
 
+v1.1.1 (2026-11-11)
+- License: GNU General Public License, version 3 (was version 2).
+- readme.html is replaced by README.md. The ReadMe button in Plugin Manager
+  opens it inside the admin, for superusers only, in its own window; it is no
+  longer a public file under zc_plugins/. The same README.md is at the root of
+  the download.
+- No screening or settings changes. Upgrade in Plugin Manager; your settings
+  and order history are kept.
+
 v1.1.0 (2026-10-29)
 - New rule, off by default: billing and delivery names differ. Set its points
   under Configuration > Fraud Screen if you want it.

@@ -26,6 +26,9 @@
  *  - NOTIFY_FRAUD_SCREEN_SCORING     after the built-in rules: add points and reasons;
  *  - NOTIFY_FRAUD_SCREEN_BEFORE_HOLD the threshold is reached: release or force the hold;
  *  - NOTIFY_FRAUD_SCREEN_HELD        after an order has been held.
+ *
+ * @package Fraud Screen
+ * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
  */
 if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');

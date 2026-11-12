@@ -7,7 +7,7 @@
  *
  * @package Fraud Screen
  * @subpackage plugins
- * @license http://zen-cart.com GNU Public License V2.0
+ * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
  */
 $define = [
     'BOX_CONFIGURATION_FRAUD_SCREEN' => 'Fraud Screen',

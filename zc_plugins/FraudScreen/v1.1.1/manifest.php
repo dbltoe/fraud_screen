@@ -4,18 +4,25 @@
  * @subpackage plugins
  * @copyright Copyright 2003-2026 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
- * @license http://zen-cart.com GNU Public License V2.0
+ * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
  * @version $Id: manifest.php 2026-08-13 19:40:00Z dbltoe $
  */
 // -----
 // ReadMe | Settings | Forum Thread | GitHub: one row of buttons in Plugin Manager's info box,
-// the pattern every free dbltoe plugin uses. The ReadMe URL is derived from this file's own
-// on-disk location rather than a hardcoded version string, so it can't go stale on a future
-// version bump. Zen Cart's shipped zc_plugins/.htaccess denies everything then explicitly
-// re-allows .html, so readme.html is reachable by design.
+// the pattern every free dbltoe plugin uses. ReadMe opens README.md through the plugin's own
+// admin page (index.php?cmd=fraud_screen_readme): behind the admin login, superusers only, in
+// its own window. The link is relative and carries no version folder, so it can't go stale on
+// a future version bump. The button is shown only to superusers; the page enforces that too,
+// because Zen Cart 2.1 keeps the description it first saw.
 //
-$fsPluginRelativeDir = basename(dirname(__DIR__)) . '/' . basename(__DIR__);
-$fsReadmeUrl = (defined('DIR_WS_CATALOG') ? DIR_WS_CATALOG : '/') . 'zc_plugins/' . $fsPluginRelativeDir . '/readme.html';
+$fsReadmeUrl = 'index.php?cmd=fraud_screen_readme';
+// Zen Cart 3.0.0 reads every manifest on every admin page, early (template resolver), before
+// admin access is set up: zen_is_superuser() there is a fatal "Undefined constant
+// SUPERUSER_PROFILE" that takes down the whole admin. Ask only once that exists.
+$fsShowReadme = true;
+if (function_exists('zen_is_superuser') && defined('SUPERUSER_PROFILE')) {
+    $fsShowReadme = zen_is_superuser();
+}
 $fsGithubUrl = 'https://github.com/dbltoe/fraud_screen';
 // The opening post of the support thread (every free dbltoe plugin has this button).
 $fsForumUrl = 'https://www.zen-cart.com/threads/207393?page=1#post-1347418';
@@ -62,14 +69,14 @@ $fsButton = static function ($url, $label, $newTab) use ($fsButtonStyle) {
 };
 $fsLinks =
     '<div style="margin:10px 0 0;padding:0 0 0 ' . $fsButtonGap . '">'
-    . $fsButton($fsReadmeUrl, 'ReadMe', true)
+    . ($fsShowReadme ? $fsButton($fsReadmeUrl, 'ReadMe', true) : '')
     . ($fsSettingsUrl !== '' ? $fsButton($fsSettingsUrl, 'Settings', false) : '')
     . ($fsForumUrl !== '' ? $fsButton($fsForumUrl, 'Forum Thread', true) : '')
     . $fsButton($fsGithubUrl, 'GitHub', true)
     . '</div>';
 
 return [
-    'pluginVersion' => 'v1.1.0',
+    'pluginVersion' => 'v1.1.1',
     'pluginName' => 'Fraud Screen',
     'pluginDescription' =>
         'Scores each incoming order against configurable fraud signals and, when the score reaches your '
@@ -92,7 +99,7 @@ return [
     // v3.0.0 track since nothing here depends on version-specific core internals.
     //
     'zcVersions' => ['v2.1.0', 'v2.2.0', 'v2.2.1', 'v2.2.2', 'v2.3.0', 'v3.0.0'],
-    'changelog' => 'readme.html',
+    'changelog' => 'changelog.txt',
     'github_repo' => $fsGithubUrl,
     'pluginGroups' => [],
 ];

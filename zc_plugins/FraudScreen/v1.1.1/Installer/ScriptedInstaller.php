@@ -4,6 +4,9 @@
  *
  * Creates its own configuration group so the settings do not clutter an existing one,
  * and removes everything cleanly on uninstall.
+ *
+ * @package Fraud Screen
+ * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License v3.0
  */
 
 use Zencart\PluginSupport\ScriptedInstaller as ScriptedInstallBase;

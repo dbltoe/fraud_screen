@@ -57,7 +57,7 @@ Each rule adds points you set; an order is held when its total reaches the thres
 
 Installs switched off. Run it as a dry run first: with logging on, it writes what it would have held without holding anything. An optional alert email goes to whoever reviews orders.
 
-Encapsulated; no core or template file is changed. Full documentation (readme.html) inside the plugin, including how to set up Square's Risk Manager, which can refuse a card before it's charged.
+Encapsulated; no core or template file is changed. Full documentation (README.md) inside the plugin, opened from the ReadMe button in Plugin Manager, including how to set up Square's Risk Manager, which can refuse a card before it's charged.
 
 ## Release Changelog
 
