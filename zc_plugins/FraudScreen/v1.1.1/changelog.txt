@@ -1,7 +1,6 @@
 Fraud Screen for Zen Cart
 
 v1.1.1 (2026-11-11)
-- License: GNU General Public License, version 3 (was version 2).
 - readme.html is replaced by README.md. The ReadMe button in Plugin Manager
   opens it inside the admin, for superusers only, in its own window; it is no
   longer a public file under zc_plugins/. The same README.md is at the root of

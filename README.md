@@ -1,6 +1,6 @@
 # Fraud Screen
 
-Version 1.1.1 · Zen Cart 2.1.0 through 3.0.0 · PHP 7.4 through 8.5 · GPL v3 · by My Zen Cart Host (dbltoe)
+Version 1.1.1 · Zen Cart 2.1.0 through 3.0.0 · PHP 7.4 through 8.5 · GPL v2 · by My Zen Cart Host (dbltoe)
 
 Scores each incoming order against configurable fraud signals and, when the score reaches your threshold, moves the order to a review status and records why.
 
@@ -188,7 +188,6 @@ Source, issues and releases are on GitHub (https://github.com/dbltoe/fraud_scree
 
 ### v1.1.1 (2026-11-11)
 
-- License: GNU General Public License, version 3 (was version 2).
 - readme.html is replaced by this guide, README.md. The **ReadMe** button in Plugin Manager opens it inside the admin, for superusers only, in its own window; it is no longer a public file under `zc_plugins/`. The same README.md is at the root of the download.
 - No screening or settings changes. Upgrade in Plugin Manager; your settings and order history are kept.
 
@@ -234,8 +233,8 @@ Source, issues and releases are on GitHub (https://github.com/dbltoe/fraud_scree
 
 ## Changelog
 
-See `changelog.txt` in the plugin folder. Version 1.1.1 moves the plugin to the GNU General Public License, version 3, and replaces readme.html with this guide, opened from the ReadMe button in Plugin Manager.
+See `changelog.txt` in the plugin folder. Version 1.1.1 replaces readme.html with this guide, opened from the ReadMe button in Plugin Manager.
 
 ## License
 
-Fraud Screen is free software under the GNU General Public License, version 3 (https://www.gnu.org/licenses/gpl-3.0.html); the full text is in `LICENSE`. Copyright © 2026 My Zen Cart Host (dbltoe).
+Fraud Screen is free software under the GNU General Public License, version 2 (https://www.gnu.org/licenses/old-licenses/gpl-2.0.html); the full text is in `LICENSE`. Copyright © 2026 My Zen Cart Host (dbltoe).
